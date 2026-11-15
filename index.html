@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Recharge Shop – Daily Account</title>
+<title>Infra Sigma Security Solution – Daily Account</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -15,8 +15,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Instrument S
 main{max-width:760px;margin:0 auto;padding:16px}
 h1{font-size:1.35rem;margin:0}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-input,select,button{font:inherit;color:inherit}
-input,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
 label{display:block;font-size:.85rem;color:var(--mute);margin-bottom:4px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
@@ -29,7 +29,7 @@ label{display:block;font-size:.85rem;color:var(--mute);margin-bottom:4px}
 .sum .n{border-color:var(--acc)}
 button{cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);padding:10px 14px}
 button.p{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:600}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .wide{grid-column:1/-1}
 .scroll{overflow-x:auto}
@@ -40,8 +40,8 @@ td button{padding:4px 8px;color:var(--bad)}
 .empty{color:var(--mute);padding:10px 0}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
 .ov.on{display:flex}
-.bill{background:#fff;color:#111;width:100%;max-width:340px;max-height:80vh;overflow:auto;border-radius:10px;padding:18px;font-size:.95rem}
-.bill .c{text-align:center}.bill hr{border:0;border-top:1px dashed #888;margin:10px 0}
+.bill{background:#fff;color:#111;width:100%;max-width:340px;max-height:80vh;overflow:auto;border-radius:10px;padding:18px;font-size:.9rem}
+.bill .c{text-align:center}.bill hr{border:0;border-top:1px dashed #888;margin:8px 0}
 .bill .ln{display:flex;justify-content:space-between;gap:12px;padding:2px 0}
 .bill .tot{font-size:1.2rem;font-weight:700}
 @media print{body *{visibility:hidden}.ov,.ov *{visibility:visible}.ov{position:absolute;inset:0;background:#fff;display:block;padding:0}.bill{max-height:none;box-shadow:none}.noprint{display:none!important}}
@@ -54,10 +54,12 @@ td button{padding:4px 8px;color:var(--bad)}
   <div class="row"><label for="d" style="margin:0">Date</label><input id="d" type="date" style="width:auto"></div>
 </header>
 
-<details class="card" id="settings-box"><summary>Shop details &amp; Google Sheet sync</summary>
+<details class="card" id="settings-box"><summary>Business details &amp; Google Sheet sync</summary>
   <div class="grid" style="margin-top:10px">
-    <div><label for="sn">Shop name</label><input id="sn"></div>
-    <div><label for="sp">Phone</label><input id="sp" inputmode="tel"></div>
+    <div><label for="sn">Shop / Business name</label><input id="sn"></div>
+    <div><label for="sp">Phone numbers</label><input id="sp" inputmode="tel"></div>
+    <div><label for="sg">GST No.</label><input id="sg"></div>
+    <div class="wide"><label for="sa">Address</label><textarea id="sa" rows="2"></textarea></div>
     <div class="wide">
       <label for="gs-url">Google Apps Script Web App URL</label>
       <input id="gs-url" type="url" value="https://script.google.com/macros/s/AKfycbxrYZ0Z4ltMYb_vHRX9mbCLcaGHZhZOc8CHfBoVcvpUD0heZcptcfJKioNoVPW3jtj5/exec">
@@ -155,6 +157,19 @@ const KEY='rechargeShop.v1';
 const DEFAULT_GS_URL='https://script.google.com/macros/s/AKfycbxrYZ0Z4ltMYb_vHRX9mbCLcaGHZhZOc8CHfBoVcvpUD0heZcptcfJKioNoVPW3jtj5/exec';
 let db={};
 try{db=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){db={}}
+
+// Pre-fill default business details if not already set
+if(!db.shop) {
+  db.shop = {
+    n: 'Infra Sigma Security Solution',
+    p: '098111 12901/02',
+    g: '07ACXPC3626M2Z4',
+    a: 'PCO Booth under handicapped quota in front of DVB 7 x 6 COMMUNITY CENTER NARAINA INDUSTRIAL AREA PH-1 Delhi',
+    gsUrl: DEFAULT_GS_URL
+  };
+  save();
+}
+
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
 const today=()=>{const t=new Date();return new Date(t-t.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const money=n=>'₹'+(Math.round(n*100)/100).toLocaleString('en-IN');
@@ -341,8 +356,11 @@ function showBill(x,i){
   const s=db.shop||{},B=$('bill');B.innerHTML='';
   const el=(t,c,tx,p)=>{const e=document.createElement(t);if(c)e.className=c;if(tx!==undefined)e.textContent=tx;(p||B).appendChild(e);return e};
   const ln=(a,b,c)=>{const r=el('div','ln'+(c?' '+c:''));el('span','',a,r);el('span','',b,r)};
-  const n=el('div','c',s.n||'Recharge Shop');n.style.fontWeight='700';n.style.fontSize='1.15rem';
-  if(s.p)el('div','c','Phone: '+s.p);
+  
+  const n=el('div','c',s.n||'Infra Sigma Security Solution');n.style.fontWeight='700';n.style.fontSize='1.05rem';
+  if(s.g)el('div','c','GST No: '+s.g).style.fontSize='0.85rem';
+  if(s.a)el('div','c',s.a).style.fontSize='0.8rem';
+  if(s.p)el('div','c','Contact: '+s.p).style.fontSize='0.85rem';
   el('hr');
   ln('Bill no.',x.bill||('OLD-'+((i||0)+1)));
   ln('Date',x.date||$('d').value);ln('Time',x.time);
@@ -366,10 +384,21 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeBill()});
 
 $('sn').value=(db.shop||{}).n||'';
 $('sp').value=(db.shop||{}).p||'';
+$('sg').value=(db.shop||{}).g||'';
+$('sa').value=(db.shop||{}).a||'';
 $('gs-url').value=(db.shop&&db.shop.gsUrl)?db.shop.gsUrl:DEFAULT_GS_URL;
 
-const saveShop=()=>{db.shop={n:$('sn').value.trim(),p:$('sp').value.trim(),gsUrl:$('gs-url').value.trim()||DEFAULT_GS_URL};save()};
-$('sn').onchange=$('sp').onchange=$('gs-url').onchange=saveShop;
+const saveShop=()=>{
+  db.shop={
+    n:$('sn').value.trim(),
+    p:$('sp').value.trim(),
+    g:$('sg').value.trim(),
+    a:$('sa').value.trim(),
+    gsUrl:$('gs-url').value.trim()||DEFAULT_GS_URL
+  };
+  save();
+};
+$('sn').onchange=$('sp').onchange=$('sg').onchange=$('sa').onchange=$('gs-url').onchange=saveShop;
 
 render();
 </script>
