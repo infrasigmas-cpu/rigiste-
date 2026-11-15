@@ -59,8 +59,8 @@ td button{padding:4px 8px;color:var(--bad)}
     <div><label for="sn">Shop name</label><input id="sn"></div>
     <div><label for="sp">Phone</label><input id="sp" inputmode="tel"></div>
     <div class="wide">
-      <label for="gs-url">Google Apps Script Web App URL (auto-saves every entry to Google Sheets)</label>
-      <input id="gs-url" type="url" value="https://script.google.com/macros/s/AKfycbxqQZONNv3VWPdYuUZc1I5elu-KuJPLOBoq2Js7Zz_8Z3rYTPe16lGEuFnR-o4PjDNm/exec">
+      <label for="gs-url">Google Apps Script Web App URL</label>
+      <input id="gs-url" type="url" value="https://script.google.com/macros/s/AKfycbxrYZ0Z4ltMYb_vHRX9mbCLcaGHZhZOc8CHfBoVcvpUD0heZcptcfJKioNoVPW3jtj5/exec">
     </div>
   </div>
 </details>
@@ -105,6 +105,24 @@ td button{padding:4px 8px;color:var(--bad)}
   <div id="empty" class="empty">No entries yet. Add the first recharge above.</div>
 </section>
 
+<!-- WAGES & EXPENSES SECTION -->
+<section class="card">
+  <strong>Wages &amp; shop expenses</strong>
+  <div class="sum" style="margin:10px 0" aria-live="polite">
+    <div><small>Total wages paid today</small><b id="w-total">₹0</b></div>
+  </div>
+  <div class="grid f">
+    <div><label for="wp">Staff / Payee name</label><input id="wp" placeholder="Helper or worker name"></div>
+    <div><label for="wa">Amount (₹)</label><input id="wa" type="number" min="0" step="any" inputmode="decimal"></div>
+    <div class="wide"><label for="wn">Note (optional)</label><input id="wn" placeholder="e.g. Daily wage, Advance, Tea expense"></div>
+  </div>
+  <div class="row" style="margin:12px 0"><button class="p" id="wadd">Add wage entry</button><span id="wmsg" class="empty" role="status"></span></div>
+  <div class="scroll"><table>
+    <thead><tr><th>Time</th><th>Payee</th><th class="r">Amount</th><th>Note</th><th></th></tr></thead>
+    <tbody id="w-tb"></tbody></table></div>
+  <div id="w-empty" class="empty">No wage or expense entries for today.</div>
+</section>
+
 <section class="card">
   <strong>Loan &amp; advance account</strong>
   <div class="sum" style="margin:10px 0" aria-live="polite">
@@ -134,19 +152,19 @@ td button{padding:4px 8px;color:var(--bad)}
 <script>
 const $=id=>document.getElementById(id);
 const KEY='rechargeShop.v1';
-const DEFAULT_GS_URL='https://script.google.com/macros/s/AKfycbxqQZONNv3VWPdYuUZc1I5elu-KuJPLOBoq2Js7Zz_8Z3rYTPe16lGEuFnR-o4PjDNm/exec';
+const DEFAULT_GS_URL='https://script.google.com/macros/s/AKfycbxrYZ0Z4ltMYb_vHRX9mbCLcaGHZhZOc8CHfBoVcvpUD0heZcptcfJKioNoVPW3jtj5/exec';
 let db={};
 try{db=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){db={}}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
 const today=()=>{const t=new Date();return new Date(t-t.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const money=n=>'₹'+(Math.round(n*100)/100).toLocaleString('en-IN');
-const day=()=>db[$('d').value]||(db[$('d').value]={ob:0,ad:0,e:[]});
+const day=()=>db[$('d').value]||(db[$('d').value]={ob:0,ad:0,e:[],wages:[]});
 const num=v=>parseFloat(v)||0;
 
 async function syncToSheet(payload, statusEl, itemRef) {
   const url = (db.shop && db.shop.gsUrl) ? db.shop.gsUrl.trim() : DEFAULT_GS_URL;
   if (!url) {
-    if (statusEl) statusEl.textContent = 'Entry added locally (add Google Sheet URL above to sync).';
+    if (statusEl) statusEl.textContent = 'Entry added locally.';
     return false;
   }
   if (statusEl) statusEl.textContent = 'Saving to Google Sheet...';
@@ -161,13 +179,14 @@ async function syncToSheet(payload, statusEl, itemRef) {
     if (statusEl) statusEl.textContent = 'Saved & synced to Google Sheet ✓';
     return true;
   } catch (err) {
-    if (statusEl) statusEl.textContent = 'Saved locally, but Sheet sync failed (check internet/URL).';
+    if (statusEl) statusEl.textContent = 'Saved locally, but Sheet sync failed.';
     return false;
   }
 }
 
 function render(){
   const D=day(),tb=$('tb');
+  D.wages = D.wages || [];
   tb.innerHTML='';D.w=D.w||{};const run={};
   let amt=0,cash=0,upi=0,sales=0;const by={};
   D.e.forEach((x,i)=>{
@@ -186,6 +205,24 @@ function render(){
     tb.appendChild(tr);
   });
   $('empty').style.display=D.e.length?'none':'block';
+  
+  // Render Wages
+  const wtb=$('w-tb');wtb.innerHTML='';
+  let wageTot=0;
+  D.wages.forEach((w,i)=>{
+    wageTot+=w.amt;
+    const tr=document.createElement('tr');
+    const td1=document.createElement('td');td1.textContent=w.time+(w.synced?' ✓':'');tr.appendChild(td1);
+    const td2=document.createElement('td');td2.textContent=w.payee;tr.appendChild(td2);
+    const td3=document.createElement('td');td3.className='r';td3.textContent=money(w.amt);tr.appendChild(td3);
+    const td4=document.createElement('td');td4.textContent=w.note||'-';tr.appendChild(td4);
+    const td5=document.createElement('td');const b=document.createElement('button');
+    b.textContent='Delete';b.onclick=()=>{D.wages.splice(i,1);save();render()};td5.appendChild(b);tr.appendChild(td5);
+    wtb.appendChild(tr);
+  });
+  $('w-empty').style.display=D.wages.length?'none':'block';
+  $('w-total').textContent=money(wageTot);
+
   const wt=$('ob-tb');wt.innerHTML='';
   const names={};['Jio','Airtel','Vi','BSNL','Tata Play','Dish TV','N-Pay'].forEach(n=>names[n.toLowerCase()]=n);
   Object.keys(by).forEach(k=>names[k]=by[k].name);
@@ -225,28 +262,34 @@ $('add').onclick=async ()=>{
   render();
 };
 
-$('sync-all').onclick=async ()=>{
-  const url = (db.shop && db.shop.gsUrl) ? db.shop.gsUrl.trim() : DEFAULT_GS_URL;
-  if (!url) { alert('Please paste your Google Apps Script Web App URL in "Shop details & Google Sheet sync" first.'); $('settings-box').open=true; $('gs-url').focus(); return; }
-  const D=day(), L=db.ledger||[];
-  let count=0;
-  for (const ent of D.e) {
-    if (!ent.synced) {
-      const ok = await syncToSheet({recordType:'daily', ...ent, bal: ent.lastBal}, $('msg'), ent);
-      if (ok) count++;
-    }
-  }
-  for (const item of L) {
-    if (!item.synced) {
-      const ok = await syncToSheet({recordType:'ledger', ...item}, $('lmsg'), item);
-      if (ok) count++;
-    }
-  }
+$('wadd').onclick=async ()=>{
+  const payee=$('wp').value.trim(),amt=num($('wa').value);
+  if(!payee){$('wmsg').textContent='Enter staff or payee name.';$('wp').focus();return}
+  if(amt<=0){$('wmsg').textContent='Enter an amount greater than 0.';$('wa').focus();return}
+  const D=day();
+  D.wages = D.wages || [];
+  const item={date:$('d').value,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),payee,amt,note:$('wn').value.trim(),synced:false};
+  D.wages.push(item);
+  save();$('wa').value='';$('wn').value='';$('wp').value='';render();
+  await syncToSheet({recordType:'wages', ...item}, $('wmsg'), item);
   render();
-  $('msg').textContent = count ? `Synced ${count} pending entries to Google Sheet ✓` : 'All entries are already synced.';
 };
 
-$('clr').onclick=()=>{if(confirm('Delete all entries for '+$('d').value+'?')){day().e=[];save();render()}};
+$('sync-all').onclick=async ()=>{
+  const url = (db.shop && db.shop.gsUrl) ? db.shop.gsUrl.trim() : DEFAULT_GS_URL;
+  if (!url) { alert('Please paste your Google Apps Script Web App URL.'); return; }
+  const D=day(), L=db.ledger||[];
+  let count=0;
+  for (const ent of D.e) { if (!ent.synced) { await syncToSheet({recordType:'daily', ...ent, bal: ent.lastBal}, $('msg'), ent); count++; } }
+  if(D.wages) {
+    for (const w of D.wages) { if (!w.synced) { await syncToSheet({recordType:'wages', ...w}, $('wmsg'), w); count++; } }
+  }
+  for (const item of L) { if (!item.synced) { await syncToSheet({recordType:'ledger', ...item}, $('lmsg'), item); count++; } }
+  render();
+  $('msg').textContent = count ? `Synced ${count} pending entries ✓` : 'All entries are already synced.';
+};
+
+$('clr').onclick=()=>{if(confirm('Delete all entries for '+$('d').value+'?')){day().e=[];day().wages=[];save();render()}};
 $('csv').onclick=()=>{
   const D=day();
   const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
@@ -266,8 +309,7 @@ function renderLedger(){
     const tr=document.createElement('tr');
     cell(tr,x.date+' '+x.time+(x.synced?' ✓':''));cell(tr,x.party);cell(tr,x.type);cell(tr,money(x.amt),'r');cell(tr,x.note||'-');
     const td=document.createElement('td'),b=document.createElement('button');
-    b.textContent='Delete';b.setAttribute('aria-label','Delete '+x.type+' for '+x.party);
-    b.onclick=()=>{L.splice(i,1);save();renderLedger()};td.appendChild(b);tr.appendChild(td);
+    b.textContent='Delete';b.onclick=()=>{L.splice(i,1);save();renderLedger()};td.appendChild(b);tr.appendChild(td);
     ht.insertBefore(tr,ht.firstChild);
   });
   let owed=0,held=0;
