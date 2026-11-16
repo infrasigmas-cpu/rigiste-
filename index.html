@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -21,9 +21,9 @@ label{display:block;font-size:.85rem;color:var(--mute);margin-bottom:4px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 @media(min-width:600px){.grid.f{grid-template-columns:repeat(3,1fr)}}
-.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
 .sum div{border-left:3px solid var(--line);padding-left:10px}
-.sum b{display:block;font-size:1.25rem}
+.sum b{display:block;font-size:1.2rem}
 .sum small{color:var(--mute)}
 .sum .g b{color:var(--gain)}
 .sum .n{border-color:var(--acc)}
@@ -71,6 +71,8 @@ td button{padding:4px 8px;color:var(--bad)}
   <div><small>Total recharge</small><b id="s-amt">₹0</b></div>
   <div><small>Electronics sales</small><b id="s-sale">₹0</b></div>
   <div><small>Cash / UPI collected</small><b id="s-pay">₹0 / ₹0</b></div>
+  <div><small>Total GST collected</small><b id="s-gst">₹0</b></div>
+  <div class="g"><small>Extra cash (no change)</small><b id="s-extra">₹0</b></div>
   <div class="n"><small>Total wallet balance</small><b id="s-bal">₹0</b></div>
 </section>
 
@@ -90,21 +92,39 @@ td button{padding:4px 8px;color:var(--bad)}
       <input id="op" list="ops" placeholder="Jio, Airtel, Vi…"><datalist id="ops"><option>Jio</option><option>Airtel</option><option>Vi</option><option>BSNL</option><option>Tata Play</option><option>Dish TV</option><option>N-Pay</option><option>BSES Rajdhani</option><option>BSES Yamuna</option><option>Tata Power-DDL</option><option>UPPCL</option><option>Delhi Jal Board</option></datalist>
 <datalist id="brands"><option>Samsung</option><option>Apple</option><option>Xiaomi</option><option>Redmi</option><option>Poco</option><option>Realme</option><option>Oppo</option><option>Vivo</option><option>iQOO</option><option>OnePlus</option><option>Motorola</option><option>Nokia</option><option>Infinix</option><option>Tecno</option><option>Itel</option><option>Lava</option><option>Nothing</option><option>Google</option><option>boAt</option><option>JBL</option><option>Sony</option><option>Noise</option><option>Boult</option><option>pTron</option><option>Zebronics</option><option>Portronics</option><option>Ambrane</option><option>Anker</option><option>Mivi</option><option>Oraimo</option><option>Philips</option><option>LG</option><option>Panasonic</option><option>Havells</option><option>Syska</option><option>Crompton</option><option>Bajaj</option><option>Usha</option><option>Orient</option><option>Eveready</option><option>Duracell</option><option>SanDisk</option><option>Kingston</option><option>HP</option><option>Dell</option><option>Lenovo</option><option>Asus</option><option>Acer</option><option>Local / No brand</option></datalist></div>
     <div><label for="num" id="numl">Number / customer</label><input id="num" inputmode="tel" placeholder="Mobile or ID"></div>
-    <div><label for="amt">Amount (₹)</label><input id="amt" type="number" min="0" step="any" inputmode="decimal"></div>
-    <div><label for="pay">Payment received</label><select id="pay"><option>Cash</option><option>UPI</option><option>Credit (udhaar)</option></select></div>
+    <div><label for="amt">Total Amount (₹)</label><input id="amt" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 299"></div>
+    <div><label for="gst">GST Rate (Inclusive)</label>
+      <select id="gst">
+        <option value="0">No GST (0%)</option>
+        <option value="5">GST 5%</option>
+        <option value="12">GST 12%</option>
+        <option value="18" selected>GST 18%</option>
+      </select>
+    </div>
+    <div><label for="rec">Cash / Paid received (₹)</label><input id="rec" type="number" min="0" step="any" inputmode="decimal" placeholder="Same as amount (or e.g. 300)"></div>
+    <div><label for="pay">Payment mode</label><select id="pay"><option>Cash</option><option>UPI</option><option>Credit (udhaar)</option></select></div>
   </div>
   <div class="row" style="margin-top:12px"><button class="p" id="add">Add entry</button><label style="margin:0;display:flex;align-items:center;gap:6px"><input type="checkbox" id="autob" checked style="width:auto"> Show bill after adding</label><span id="msg" class="empty" role="status"></span></div>
 </form>
 
 <section class="card">
   <div class="row" style="justify-content:space-between;margin-bottom:8px">
-    <strong>Entries for the day</strong>
+    <strong>Recharge &amp; bill entries</strong>
     <div class="row"><button id="sync-all">Sync unsent</button><button id="csv">Download CSV</button><button id="clr">Clear day</button></div>
   </div>
   <div class="scroll"><table>
-    <thead><tr><th>Time</th><th>Service</th><th>Operator</th><th>Number</th><th class="r">Amount</th><th class="r">Balance</th><th>Paid</th><th></th></tr></thead>
+    <thead><tr><th>Time</th><th>Service</th><th>Operator</th><th>Number</th><th class="r">Amount</th><th class="r">GST</th><th class="r">Received</th><th class="r">Extra</th><th class="r">Balance</th><th>Mode</th><th></th></tr></thead>
     <tbody id="tb"></tbody></table></div>
-  <div id="empty" class="empty">No entries yet. Add the first recharge above.</div>
+  <div id="empty" class="empty">No recharge entries yet.</div>
+</section>
+
+<!-- SEPARATE ELECTRONICS SALES SECTION -->
+<section class="card">
+  <strong>Electronics &amp; item sales</strong>
+  <div class="scroll"><table>
+    <thead><tr><th>Time</th><th>Brand</th><th>Item Sold</th><th class="r">Amount</th><th class="r">GST</th><th class="r">Received</th><th class="r">Extra</th><th>Mode</th><th></th></tr></thead>
+    <tbody id="sale-tb"></tbody></table></div>
+  <div id="sale-empty" class="empty">No electronics sales recorded today.</div>
 </section>
 
 <!-- WAGES & EXPENSES SECTION -->
@@ -155,10 +175,12 @@ td button{padding:4px 8px;color:var(--bad)}
 const $=id=>document.getElementById(id);
 const KEY='rechargeShop.v1';
 const DEFAULT_GS_URL='https://script.google.com/macros/s/AKfycbxrYZ0Z4ltMYb_vHRX9mbCLcaGHZhZOc8CHfBoVcvpUD0heZcptcfJKioNoVPW3jtj5/exec';
+
 let db={};
 try{db=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){db={}}
 
-// Pre-fill default business details if not already set
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
+
 if(!db.shop) {
   db.shop = {
     n: 'Infra Sigma Security Solution',
@@ -170,11 +192,19 @@ if(!db.shop) {
   save();
 }
 
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}};
 const today=()=>{const t=new Date();return new Date(t-t.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
-const money=n=>'₹'+(Math.round(n*100)/100).toLocaleString('en-IN');
-const day=()=>db[$('d').value]||(db[$('d').value]={ob:0,ad:0,e:[],wages:[]});
+const money=n=>'₹'+(Math.round(n*100)/100).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2});
+const day=()=>db[$('d').value]||(db[$('d').value]={ob:0,ad:0,e:[],sales:[],wages:[]});
 const num=v=>parseFloat(v)||0;
+
+// Helper to compute tax-inclusive GST breakdown
+function calcGst(totalAmt, rate) {
+  const r = num(rate);
+  if (r <= 0) return { rate: 0, base: totalAmt, tax: 0 };
+  const base = totalAmt / (1 + r / 100);
+  const tax = totalAmt - base;
+  return { rate: r, base, tax };
+}
 
 async function syncToSheet(payload, statusEl, itemRef) {
   const url = (db.shop && db.shop.gsUrl) ? db.shop.gsUrl.trim() : DEFAULT_GS_URL;
@@ -200,26 +230,81 @@ async function syncToSheet(payload, statusEl, itemRef) {
 }
 
 function render(){
-  const D=day(),tb=$('tb');
+  const D=day(),tb=$('tb'),stb=$('sale-tb');
+  D.sales = D.sales || [];
   D.wages = D.wages || [];
-  tb.innerHTML='';D.w=D.w||{};const run={};
-  let amt=0,cash=0,upi=0,sales=0;const by={};
+  tb.innerHTML='';stb.innerHTML='';D.w=D.w||{};const run={};
+  let amt=0,cash=0,upi=0,salesTot=0,extraTot=0,gstTot=0;const by={};
+
+  // 1. Render Recharges & Bills
   D.e.forEach((x,i)=>{
-    const sale=x.svc==='Electronics sale';let bal=null;
-    if(sale){sales+=x.amt}else{amt+=x.amt;const wk=(x.op||'No operator').toLowerCase();const w0=D.w[wk]||{};if(!(wk in run))run[wk]=num(w0.ob)+num(w0.ad);run[wk]-=x.amt;bal=run[wk];
-    const g=by[wk]||(by[wk]={name:x.op||'No operator',n:0,t:0});g.n++;g.t+=x.amt}
+    let bal=null;
+    const received = (x.rec !== undefined && x.rec !== null) ? x.rec : x.amt;
+    const extra = received - x.amt;
+    if(extra > 0) extraTot += extra;
+
+    const gInfo = calcGst(x.amt, x.gstRate || 0);
+    gstTot += gInfo.tax;
+
+    amt+=x.amt;
+    const wk=(x.op||'No operator').toLowerCase();
+    const w0=D.w[wk]||{};
+    if(!(wk in run)) run[wk]=num(w0.ob)+num(w0.ad);
+    run[wk]-=x.amt;
+    bal=run[wk];
     x.lastBal = bal;
-    if(x.pay==='Cash')cash+=x.amt;else if(x.pay==='UPI')upi+=x.amt;
+
+    if(x.pay==='Cash')cash+=received;else if(x.pay==='UPI')upi+=received;
+
     const tr=document.createElement('tr');
     [x.time + (x.synced ? ' ✓' : ''),x.svc,x.op||'-',x.num||'-'].forEach(t=>{const td=document.createElement('td');td.textContent=t;tr.appendChild(td)});
-    [money(x.amt),bal===null?'-':money(bal)].forEach(t=>{const td=document.createElement('td');td.className='r';td.textContent=t;tr.appendChild(td)});
+    
+    const tdAmt=document.createElement('td');tdAmt.className='r';tdAmt.textContent=money(x.amt);tr.appendChild(tdAmt);
+    const tdGst=document.createElement('td');tdGst.className='r';tdGst.textContent=gInfo.rate>0?`${money(gInfo.tax)} (${gInfo.rate}%)`:'-';tr.appendChild(tdGst);
+    const tdRec=document.createElement('td');tdRec.className='r';tdRec.textContent=money(received);tr.appendChild(tdRec);
+    const tdExt=document.createElement('td');tdExt.className='r';
+    if(extra !== 0){tdExt.textContent=(extra>0?'+':'')+money(extra);tdExt.style.color=extra>0?'var(--gain)':'var(--bad)';tdExt.style.fontWeight='600';}else{tdExt.textContent='-';}
+    tr.appendChild(tdExt);
+    const tdBal=document.createElement('td');tdBal.className='r';tdBal.textContent=bal===null?'-':money(bal);tr.appendChild(tdBal);
+
     const p=document.createElement('td');p.textContent=x.pay;tr.appendChild(p);
     const a=document.createElement('td'),b=document.createElement('button');
     b.textContent='Delete';b.setAttribute('aria-label','Delete entry '+(i+1));
-    b.onclick=()=>{D.e.splice(i,1);save();render()};const bb=document.createElement('button');bb.textContent='Bill';bb.style.color='var(--acc)';bb.setAttribute('aria-label','Show bill for entry '+(i+1));bb.onclick=()=>showBill(D.e[i],i);a.appendChild(bb);a.appendChild(b);tr.appendChild(a);
+    b.onclick=()=>{D.e.splice(i,1);save();render()};const bb=document.createElement('button');bb.textContent='Bill';bb.style.color='var(--acc)';bb.setAttribute('aria-label','Show bill for entry '+(i+1));bb.onclick=()=>showBill(D.e[i],i,false);a.appendChild(bb);a.appendChild(b);tr.appendChild(a);
     tb.appendChild(tr);
   });
   $('empty').style.display=D.e.length?'none':'block';
+
+  // 2. Render Separate Electronics Sales
+  D.sales.forEach((s,i)=>{
+    salesTot+=s.amt;
+    const received = (s.rec !== undefined && s.rec !== null) ? s.rec : s.amt;
+    const extra = received - s.amt;
+    if(extra > 0) extraTot += extra;
+
+    const gInfo = calcGst(s.amt, s.gstRate || 0);
+    gstTot += gInfo.tax;
+
+    if(s.pay==='Cash')cash+=received;else if(s.pay==='UPI')upi+=received;
+
+    const tr=document.createElement('tr');
+    const td1=document.createElement('td');td1.textContent=s.time+(s.synced?' ✓':'');tr.appendChild(td1);
+    const td2=document.createElement('td');td2.textContent=s.op||'-';tr.appendChild(td2);
+    const td3=document.createElement('td');td3.textContent=s.num||'-';tr.appendChild(td3);
+    const td4=document.createElement('td');td4.className='r';td4.textContent=money(s.amt);tr.appendChild(td4);
+    const tdGst=document.createElement('td');tdGst.className='r';tdGst.textContent=gInfo.rate>0?`${money(gInfo.tax)} (${gInfo.rate}%)`:'-';tr.appendChild(tdGst);
+    const td5=document.createElement('td');td5.className='r';td5.textContent=money(received);tr.appendChild(td5);
+    const td6=document.createElement('td');td6.className='r';
+    if(extra!==0){td6.textContent=(extra>0?'+':'')+money(extra);td6.style.color=extra>0?'var(--gain)':'var(--bad)';td6.style.fontWeight='600';}else{td6.textContent='-';}
+    tr.appendChild(td6);
+    const td7=document.createElement('td');td7.textContent=s.pay;tr.appendChild(td7);
+
+    const td8=document.createElement('td');const bb=document.createElement('button');bb.textContent='Bill';bb.style.color='var(--acc)';bb.onclick=()=>showBill(D.sales[i],i,true);
+    const b=document.createElement('button');b.textContent='Delete';b.onclick=()=>{D.sales.splice(i,1);save();render()};
+    td8.appendChild(bb);td8.appendChild(b);tr.appendChild(td8);
+    stb.appendChild(tr);
+  });
+  $('sale-empty').style.display=D.sales.length?'none':'block';
   
   // Render Wages
   const wtb=$('w-tb');wtb.innerHTML='';
@@ -238,42 +323,96 @@ function render(){
   $('w-empty').style.display=D.wages.length?'none':'block';
   $('w-total').textContent=money(wageTot);
 
+  // Render Pinned Operator Wallet Table
   const wt=$('ob-tb');wt.innerHTML='';
-  const names={};['Jio','Airtel','Vi','BSNL','Tata Play','Dish TV','N-Pay'].forEach(n=>names[n.toLowerCase()]=n);
-  Object.keys(by).forEach(k=>names[k]=by[k].name);
-  Object.keys(D.w).forEach(k=>{if(!names[k])names[k]=k});
+  const fixedOps = [
+    {key:'jio', name:'Jio'},
+    {key:'airtel', name:'Airtel'},
+    {key:'vi', name:'Vi'},
+    {key:'bsnl', name:'BSNL'},
+    {key:'tata play', name:'Tata Play'},
+    {key:'dish tv', name:'Dish TV'},
+    {key:'n-pay', name:'N-Pay'}
+  ];
+
   let total=0;
-  const inp=(k,f)=>{const td=document.createElement('td');td.className='r';const i=document.createElement('input');i.type='number';i.min='0';i.step='any';i.inputMode='decimal';i.style.width='96px';i.value=(D.w[k]||{})[f]||'';i.setAttribute('aria-label',names[k]+(f==='ob'?' opening balance':' top-up'));i.onchange=()=>{D.w[k]=D.w[k]||{};D.w[k][f]=num(i.value);save();render()};td.appendChild(i);return td};
-  Object.keys(names).forEach(k=>{
-    const w=D.w[k]||{},g=by[k]||{n:0,t:0},b=num(w.ob)+num(w.ad)-g.t;total+=b;
+  const inp=(k,f)=>{const td=document.createElement('td');td.className='r';const i=document.createElement('input');i.type='number';i.min='0';i.step='any';i.inputMode='decimal';i.style.width='96px';i.value=(D.w[k]||{})[f]||'';i.setAttribute('aria-label',k+(f==='ob'?' opening balance':' top-up'));i.onchange=()=>{D.w[k]=D.w[k]||{};D.w[k][f]=num(i.value);save();render()};td.appendChild(i);return td};
+
+  fixedOps.forEach(opItem=>{
+    const k=opItem.key;
+    const w=D.w[k]||{}, g=by[k]||{n:0,t:0}, b=num(w.ob)+num(w.ad)-g.t;
+    total+=b;
     const tr=document.createElement('tr');
-    const n=document.createElement('td');n.textContent=names[k];tr.appendChild(n);
+    const n=document.createElement('td');n.textContent=opItem.name;tr.appendChild(n);
     tr.appendChild(inp(k,'ob'));tr.appendChild(inp(k,'ad'));
     const r=document.createElement('td');r.className='r';r.textContent=money(g.t)+' ('+g.n+')';tr.appendChild(r);
     const bt=document.createElement('td');bt.className='r';bt.style.fontWeight='600';bt.textContent=money(b);if(b<0)bt.style.color='var(--bad)';tr.appendChild(bt);
     wt.appendChild(tr);
   });
-  $('s-amt').textContent=money(amt);$('s-sale').textContent=money(sales);
+
+  $('s-amt').textContent=money(amt);$('s-sale').textContent=money(salesTot);
   $('s-pay').textContent=money(cash)+' / '+money(upi);
+  $('s-gst').textContent=money(gstTot);
+  $('s-extra').textContent=money(extraTot);
   $('s-bal').textContent=money(total);
   renderLedger();
 }
 
 $('d').value=today();
 $('d').onchange=render;
-$('svc').onchange=()=>{const v=$('svc').value,e=['Electricity bill','Water bill'].includes(v),s=v==='Electronics sale';$('numl').textContent=s?'Item sold':e?'Consumer number (K / CA no.)':'Number / customer';$('num').placeholder=s?'Charger, earphones, cable…':e?'Consumer number':'Mobile or ID';$('opl').textContent=s?'Brand (optional)':'Operator';$('op').setAttribute('list',s?'brands':'ops');$('op').placeholder=s?'Samsung, boAt, JBL…':'Jio, Airtel, Vi…'};
+$('svc').onchange=()=>{
+  const v=$('svc').value, s=v==='Electronics sale', e=['Electricity bill','Water bill'].includes(v);
+  $('numl').textContent=s?'Item sold':e?'Consumer number (K / CA no.)':'Number / customer';
+  $('num').placeholder=s?'Charger, earphones, cable…':e?'Consumer number':'Mobile or ID';
+  $('opl').textContent=s?'Brand (optional)':'Operator';
+  $('op').setAttribute('list',s?'brands':'ops');
+  $('op').placeholder=s?'Samsung, boAt, JBL…':'Jio, Airtel, Vi…';
+};
 
 $('add').onclick=async ()=>{
   const amt=num($('amt').value);
-  if(amt<=0){$('msg').textContent='Enter a recharge amount greater than 0.';$('amt').focus();return}
+  if(amt<=0){$('msg').textContent='Enter an amount greater than 0.';$('amt').focus();return}
+  const recRaw=$('rec').value.trim();
+  const rec=recRaw==='' ? amt : num(recRaw);
+  const extra=rec - amt;
+  const gstRate=num($('gst').value);
+  const gInfo=calcGst(amt, gstRate);
   const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  const ent={time:t,date:$('d').value,bill:nextBill(),svc:$('svc').value,op:$('op').value.trim(),num:$('num').value.trim(),amt,pay:$('pay').value,synced:false};
-  day().e.push(ent);
-  save();
-  ['num','amt'].forEach(i=>$(i).value='');
-  render();
-  if($('autob').checked)showBill(ent);else $('num').focus();
-  await syncToSheet({recordType:'daily', ...ent, bal: ent.lastBal}, $('msg'), ent);
+  const isSale=$('svc').value==='Electronics sale';
+  
+  const ent={
+    time:t,
+    date:$('d').value,
+    bill:nextBill(),
+    svc:$('svc').value,
+    op:$('op').value.trim(),
+    num:$('num').value.trim(),
+    amt,
+    gstRate: gInfo.rate,
+    baseAmt: Math.round(gInfo.base*100)/100,
+    gstAmt: Math.round(gInfo.tax*100)/100,
+    rec,extra,
+    pay:$('pay').value,
+    synced:false
+  };
+
+  const D=day();
+  if(isSale){
+    D.sales = D.sales || [];
+    D.sales.push(ent);
+    save();
+    ['num','amt','rec'].forEach(i=>$(i).value='');
+    render();
+    if($('autob').checked)showBill(ent, D.sales.length-1, true);else $('num').focus();
+    await syncToSheet({recordType:'sale', ...ent}, $('msg'), ent);
+  } else {
+    D.e.push(ent);
+    save();
+    ['num','amt','rec'].forEach(i=>$(i).value='');
+    render();
+    if($('autob').checked)showBill(ent, D.e.length-1, false);else $('num').focus();
+    await syncToSheet({recordType:'daily', ...ent, bal: ent.lastBal}, $('msg'), ent);
+  }
   render();
 };
 
@@ -296,6 +435,9 @@ $('sync-all').onclick=async ()=>{
   const D=day(), L=db.ledger||[];
   let count=0;
   for (const ent of D.e) { if (!ent.synced) { await syncToSheet({recordType:'daily', ...ent, bal: ent.lastBal}, $('msg'), ent); count++; } }
+  if(D.sales) {
+    for (const s of D.sales) { if (!s.synced) { await syncToSheet({recordType:'sale', ...s}, $('msg'), s); count++; } }
+  }
   if(D.wages) {
     for (const w of D.wages) { if (!w.synced) { await syncToSheet({recordType:'wages', ...w}, $('wmsg'), w); count++; } }
   }
@@ -304,13 +446,31 @@ $('sync-all').onclick=async ()=>{
   $('msg').textContent = count ? `Synced ${count} pending entries ✓` : 'All entries are already synced.';
 };
 
-$('clr').onclick=()=>{if(confirm('Delete all entries for '+$('d').value+'?')){day().e=[];day().wages=[];save();render()}};
+$('clr').onclick=()=>{if(confirm('Delete all entries for '+$('d').value+'?')){day().e=[];day().sales=[];day().wages=[];save();render()}};
 $('csv').onclick=()=>{
   const D=day();
   const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
-  const run={};D.w=D.w||{};const rows=[['Date','Time','Service','Operator','Number','Amount','Operator balance','Payment']].concat(D.e.map(x=>{if(x.svc==='Electronics sale')return [$('d').value,x.time,x.svc,x.op,x.num,x.amt,'',x.pay];const k=(x.op||'No operator').toLowerCase();if(!(k in run)){const w=D.w[k]||{};run[k]=num(w.ob)+num(w.ad)}run[k]-=x.amt;return [$('d').value,x.time,x.svc,x.op,x.num,x.amt,run[k],x.pay]}));
+  const run={};D.w=D.w||{};
+  let rows=[['Date','Time','Type','Service/Brand','Number/Item','Total Amount','GST Rate (%)','Base Amount','GST Amount','Cash Received','Extra Cash','Operator balance','Payment']].concat(
+    D.e.map(x=>{
+      const rec=(x.rec!==undefined&&x.rec!==null)?x.rec:x.amt;
+      const ext=rec-x.amt;
+      const g=calcGst(x.amt, x.gstRate||0);
+      const k=(x.op||'No operator').toLowerCase();
+      if(!(k in run)){const w=D.w[k]||{};run[k]=num(w.ob)+num(w.ad)}
+      run[k]-=x.amt;
+      return [$('d').value,x.time,'Recharge',x.svc,x.num,x.amt,g.rate,Math.round(g.base*100)/100,Math.round(g.tax*100)/100,rec,ext,run[k],x.pay];
+    })
+  ).concat(
+    (D.sales||[]).map(s=>{
+      const rec=(s.rec!==undefined&&s.rec!==null)?s.rec:s.amt;
+      const ext=rec-s.amt;
+      const g=calcGst(s.amt, s.gstRate||0);
+      return [$('d').value,s.time,'Sale',s.op||'-',s.num||'-',s.amt,g.rate,Math.round(g.base*100)/100,Math.round(g.tax*100)/100,rec,ext,'',s.pay];
+    })
+  );
   const blob=new Blob([rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='recharge-'+$('d').value+'.csv';a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='recharge-and-sales-'+$('d').value+'.csv';a.click();
 };
 
 function renderLedger(){
@@ -352,7 +512,7 @@ $('ladd').onclick=async ()=>{
 };
 
 function nextBill(){db.billNo=(db.billNo||0)+1;return 'B'+String(db.billNo).padStart(4,'0')}
-function showBill(x,i){
+function showBill(x,i,isSale){
   const s=db.shop||{},B=$('bill');B.innerHTML='';
   const el=(t,c,tx,p)=>{const e=document.createElement(t);if(c)e.className=c;if(tx!==undefined)e.textContent=tx;(p||B).appendChild(e);return e};
   const ln=(a,b,c)=>{const r=el('div','ln'+(c?' '+c:''));el('span','',a,r);el('span','',b,r)};
@@ -365,13 +525,28 @@ function showBill(x,i){
   ln('Bill no.',x.bill||('OLD-'+((i||0)+1)));
   ln('Date',x.date||$('d').value);ln('Time',x.time);
   el('hr');
-  const sale=x.svc==='Electronics sale',util=['Electricity bill','Water bill'].includes(x.svc);
-  ln('Service',x.svc);
-  if(x.op)ln(sale?'Brand':'Operator',x.op);
-  if(x.num)ln(sale?'Item':util?'Consumer no.':'Number',x.num);
+  ln('Service',isSale?'Electronics sale':x.svc);
+  if(x.op)ln(isSale?'Brand':'Operator',x.op);
+  if(x.num)ln(isSale?'Item sold':'Number',x.num);
   ln('Paid by',x.pay);
   el('hr');
-  ln('Total',money(x.amt),'tot');
+
+  const gInfo=calcGst(x.amt, x.gstRate||0);
+  if(gInfo.rate>0){
+    const halfRate = gInfo.rate / 2;
+    const halfTax = gInfo.tax / 2;
+    ln('Taxable value',money(gInfo.base));
+    ln(`CGST (${halfRate}%)`,money(halfTax));
+    ln(`SGST (${halfRate}%)`,money(halfTax));
+  }
+
+  const received=(x.rec!==undefined&&x.rec!==null)?x.rec:x.amt;
+  const extra=received-x.amt;
+  ln('Total amount',money(x.amt),'tot');
+  if(extra!==0){
+    ln('Cash received',money(received));
+    ln(extra>0?'Extra (no change)':'Short paid',money(Math.abs(extra)));
+  }
   if(x.pay==='Credit (udhaar)')el('div','c','Amount due (credit)').style.marginTop='6px';
   el('hr');
   el('div','c','Thank you. Visit again!');
