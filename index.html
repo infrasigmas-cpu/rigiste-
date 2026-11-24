@@ -28,6 +28,7 @@ label{display:block;font-size:.85rem;color:var(--mute);margin-bottom:4px}
 .sum .g b{color:var(--gain)}
 .sum .n{border-color:var(--acc)}
 button{cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);padding:10px 14px}
+button:disabled{opacity:.6;cursor:wait}
 button.p{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:600}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -51,7 +52,11 @@ td button{padding:4px 8px;color:var(--bad)}
 <main>
 <header>
   <h1>Daily account register <small style="font-size:.7rem;font-weight:400;color:var(--mute)">v24-Nov-2026</small></h1>
-  <div class="row"><label for="d" style="margin:0">Date</label><input id="d" type="date" style="width:auto"></div>
+  <div class="row">
+    <button type="button" class="p" id="gsync">☁ Google Sync <span id="gs-badge"></span></button>
+    <label for="d" style="margin:0">Date</label><input id="d" type="date" style="width:auto">
+  </div>
+  <div id="gs-msg" class="empty" role="status" style="width:100%;padding:0"></div>
 </header>
 
 <details class="card" id="settings-box"><summary>Business details &amp; Google Sheet sync</summary>
@@ -62,7 +67,7 @@ td button{padding:4px 8px;color:var(--bad)}
     <div class="wide"><label for="sa">Address</label><textarea id="sa" rows="2"></textarea></div>
     <div class="wide">
       <label for="gs-url">Google Apps Script Web App URL</label>
-      <input id="gs-url" type="url" value="https://script.google.com/macros/s/AKfycbxrYZ0Z4ltMYb_vHRX9mbCLcaGHZhZOc8CHfBoVcvpUD0heZcptcfJKioNoVPW3jtj5/exec">
+      <input id="gs-url" type="url" placeholder="https://script.google.com/macros/s/.../exec">
     </div>
   </div>
 </details>
@@ -212,7 +217,7 @@ td button{padding:4px 8px;color:var(--bad)}
 <script>
 const $=id=>document.getElementById(id);
 const KEY='rechargeShop.v1';
-const DEFAULT_GS_URL='https://script.google.com/macros/s/AKfycbxrYZ0Z4ltMYb_vHRX9mbCLcaGHZhZOc8CHfBoVcvpUD0heZcptcfJKioNoVPW3jtj5/exec';
+const DEFAULT_GS_URL='https://script.google.com/macros/s/AKfycbzDKhmzXa2grk84y71HDIFJXoWo0fnum7ugJiHO5-GIl1BhXEwNUCGRT4eLiPTOfL8Z/exec';
 
 let db={};
 try{db=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){db={}}
@@ -338,7 +343,6 @@ function render(){
 
     amt+=x.amt;
     const wk=(x.op||'No operator').toLowerCase();
-    // FIX: accumulate per-operator recharge totals for the wallet table
     const g0=by[wk]||(by[wk]={n:0,t:0});g0.n++;g0.t+=x.amt;
     const w0=D.w[wk]||{};
     if(!(wk in run)) run[wk]=openEff(D,wk)+num(w0.ad);
@@ -483,6 +487,7 @@ function render(){
   });
   renderInv();
   renderLedger();
+  updateBadge();
 }
 
 $('d').value=today();
@@ -611,22 +616,49 @@ $('wadd').onclick=async ()=>{
   render();
 };
 
-$('sync-all').onclick=async ()=>{
-  const url = (db.shop && db.shop.gsUrl) ? db.shop.gsUrl.trim() : DEFAULT_GS_URL;
-  if (!url) { $('msg').textContent='Please paste your Google Apps Script Web App URL.'; return; }
-  const D=day(), L=db.ledger||[];
-  let count=0;
-  for (const ent of D.e) { if (!ent.synced) { await syncToSheet({recordType:'daily', ...ent, bal: ent.lastBal}, $('msg'), ent); count++; } }
-  if(D.sales) {
-    for (const s of D.sales) { if (!s.synced) { await syncToSheet({recordType:'sale', ...s}, $('msg'), s); count++; } }
+/* ---------- Google Sync (all days) ---------- */
+function pendingCount(){
+  let n=0;
+  Object.keys(db).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).forEach(d=>{
+    const D=db[d]||{};
+    [...(D.e||[]),...(D.sales||[]),...(D.wages||[])].forEach(x=>{if(!x.synced)n++});
+  });
+  (db.ledger||[]).forEach(x=>{if(!x.synced)n++});
+  return n;
+}
+function updateBadge(){
+  const n=pendingCount();
+  $('gs-badge').textContent=n?'('+n+' pending)':'✓';
+}
+let syncing=false;
+async function gsyncAll(){
+  if(syncing)return;
+  const url=(db.shop&&db.shop.gsUrl)?db.shop.gsUrl.trim():DEFAULT_GS_URL;
+  const st=$('gs-msg'),btn=$('gsync');
+  if(!url){st.textContent='Pehle Google Apps Script URL daalo (Business details mein).';return}
+  const total=pendingCount();
+  if(!total){st.textContent='Sab kuch pehle se synced hai ✓';return}
+  syncing=true;btn.disabled=true;
+  let done=0,fail=0;
+  const send=async(payload,ref)=>{
+    st.textContent='Syncing '+(done+fail+1)+' / '+total+'…';
+    const ok=await syncToSheet(payload,null,ref);
+    if(ok)done++;else fail++;
+  };
+  const dates=Object.keys(db).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+  for(const d of dates){
+    const D=db[d]||{};
+    for(const x of (D.e||[]))     if(!x.synced) await send({recordType:'daily',...x,date:x.date||d,bal:x.lastBal},x);
+    for(const x of (D.sales||[])) if(!x.synced) await send({recordType:'sale',...x,date:x.date||d},x);
+    for(const x of (D.wages||[])) if(!x.synced) await send({recordType:'wages',...x,date:x.date||d},x);
   }
-  if(D.wages) {
-    for (const w of D.wages) { if (!w.synced) { await syncToSheet({recordType:'wages', ...w}, $('wmsg'), w); count++; } }
-  }
-  for (const item of L) { if (!item.synced) { await syncToSheet({recordType:'ledger', ...item}, $('lmsg'), item); count++; } }
-  render();
-  $('msg').textContent = count ? `Synced ${count} pending entries ✓` : 'All entries are already synced.';
-};
+  for(const x of (db.ledger||[])) if(!x.synced) await send({recordType:'ledger',...x},x);
+  save();render();
+  st.textContent=fail?('Synced '+done+', failed '+fail+'. Internet check karke dobara dabao.'):('Synced '+done+' entries ✓');
+  syncing=false;btn.disabled=false;
+}
+$('gsync').onclick=gsyncAll;
+$('sync-all').onclick=gsyncAll;
 
 twoTap($('clr'),'Tap again to clear',()=>{(day().sales||[]).forEach(restoreStock);day().e=[];day().sales=[];day().wages=[];save();render()});
 $('csv').onclick=()=>{
@@ -690,7 +722,7 @@ $('ladd').onclick=async ()=>{
   db.ledger.push(item);
   save();$('la').value='';$('ln').value='';renderLedger();
   await syncToSheet({recordType:'ledger', ...item}, $('lmsg'), item);
-  renderLedger();
+  renderLedger();updateBadge();
 };
 
 function nextBill(){db.billNo=(db.billNo||0)+1;return 'B'+String(db.billNo).padStart(4,'0')}
