@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -70,15 +70,25 @@ td button{padding:4px 8px;color:var(--bad)}
 <section class="card sum" aria-live="polite">
   <div><small>Total recharge</small><b id="s-amt">₹0</b></div>
   <div><small>Electronics sales</small><b id="s-sale">₹0</b></div>
+  <div class="g"><small>Discount given</small><b id="s-disc">₹0</b></div>
   <div><small>Cash / UPI collected</small><b id="s-pay">₹0 / ₹0</b></div>
   <div><small>Total GST collected</small><b id="s-gst">₹0</b></div>
   <div class="g"><small>Extra cash (no change)</small><b id="s-extra">₹0</b></div>
   <div class="n"><small>Total wallet balance</small><b id="s-bal">₹0</b></div>
+  <div class="n"><small>Cash in hand (closing)</small><b id="s-cash">₹0</b></div>
+</section>
+
+<section class="card">
+  <strong>Cash &amp; UPI book</strong>
+  <div class="empty" style="padding:2px 0 8px">Opening carries forward from the previous day (grey = carried). Type a number to override it. Closing = opening + collected − wages paid (wages are taken from cash). Credit (udhaar) is not counted.</div>
+  <div class="scroll"><table>
+    <thead><tr><th></th><th class="r">Opening (₹)</th><th class="r">Collected</th><th class="r">Wages paid</th><th class="r">Closing</th></tr></thead>
+    <tbody id="cb-tb"></tbody></table></div>
 </section>
 
 <section class="card">
   <strong>Wallet balance by operator</strong>
-  <div class="empty" style="padding:2px 0 8px">Enter each operator's opening balance and top-up. Balance = opening + top-up − recharges.</div>
+  <div class="empty" style="padding:2px 0 8px">Opening balance carries forward from the previous day automatically (grey = carried). Type a number to override it. Balance = opening + top-up − recharges.</div>
   <div class="scroll"><table>
     <thead><tr><th>Operator</th><th class="r">Opening (₹)</th><th class="r">Top-up (₹)</th><th class="r">Recharged</th><th class="r">Balance</th></tr></thead>
     <tbody id="ob-tb"></tbody></table></div>
@@ -92,7 +102,9 @@ td button{padding:4px 8px;color:var(--bad)}
       <input id="op" list="ops" placeholder="Jio, Airtel, Vi…"><datalist id="ops"><option>Jio</option><option>Airtel</option><option>Vi</option><option>BSNL</option><option>Tata Play</option><option>Dish TV</option><option>N-Pay</option><option>BSES Rajdhani</option><option>BSES Yamuna</option><option>Tata Power-DDL</option><option>UPPCL</option><option>Delhi Jal Board</option></datalist>
 <datalist id="brands"><option>Samsung</option><option>Apple</option><option>Xiaomi</option><option>Redmi</option><option>Poco</option><option>Realme</option><option>Oppo</option><option>Vivo</option><option>iQOO</option><option>OnePlus</option><option>Motorola</option><option>Nokia</option><option>Infinix</option><option>Tecno</option><option>Itel</option><option>Lava</option><option>Nothing</option><option>Google</option><option>boAt</option><option>JBL</option><option>Sony</option><option>Noise</option><option>Boult</option><option>pTron</option><option>Zebronics</option><option>Portronics</option><option>Ambrane</option><option>Anker</option><option>Mivi</option><option>Oraimo</option><option>Philips</option><option>LG</option><option>Panasonic</option><option>Havells</option><option>Syska</option><option>Crompton</option><option>Bajaj</option><option>Usha</option><option>Orient</option><option>Eveready</option><option>Duracell</option><option>SanDisk</option><option>Kingston</option><option>HP</option><option>Dell</option><option>Lenovo</option><option>Asus</option><option>Acer</option><option>Local / No brand</option></datalist></div>
     <div><label for="num" id="numl">Number / customer</label><input id="num" inputmode="tel" placeholder="Mobile or ID"></div>
-    <div><label for="amt">Total Amount (₹)</label><input id="amt" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 299"></div>
+    <div><label for="amt" id="amtl">Total Amount (₹)</label><input id="amt" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 299"></div>
+    <div id="qw" style="display:none"><label for="qty">Quantity</label><input id="qty" type="number" min="1" step="any" inputmode="decimal" value="1"></div>
+    <div id="dw" style="display:none"><label for="dv">Discount on bill</label><div class="row" style="flex-wrap:nowrap;gap:6px"><select id="dt" style="width:72px" aria-label="Discount type"><option>₹</option><option>%</option></select><input id="dv" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></div></div>
     <div><label for="gst">GST Rate (Inclusive)</label>
       <select id="gst">
         <option value="0">No GST (0%)</option>
@@ -104,7 +116,8 @@ td button{padding:4px 8px;color:var(--bad)}
     <div><label for="rec">Cash / Paid received (₹)</label><input id="rec" type="number" min="0" step="any" inputmode="decimal" placeholder="Same as amount (or e.g. 300)"></div>
     <div><label for="pay">Payment mode</label><select id="pay"><option>Cash</option><option>UPI</option><option>Credit (udhaar)</option></select></div>
   </div>
-  <div class="row" style="margin-top:12px"><button class="p" id="add">Add entry</button><label style="margin:0;display:flex;align-items:center;gap:6px"><input type="checkbox" id="autob" checked style="width:auto"> Show bill after adding</label><span id="msg" class="empty" role="status"></span></div>
+  <div class="row" style="margin-top:12px"><button id="addi" style="display:none">+ Add item to bill</button><button class="p" id="add">Add entry</button><label style="margin:0;display:flex;align-items:center;gap:6px"><input type="checkbox" id="autob" checked style="width:auto"> Show bill after adding</label><span id="msg" class="empty" role="status"></span></div>
+  <div id="cartbox" style="display:none;margin-top:12px"></div>
 </form>
 
 <section class="card">
@@ -122,7 +135,7 @@ td button{padding:4px 8px;color:var(--bad)}
 <section class="card">
   <strong>Electronics &amp; item sales</strong>
   <div class="scroll"><table>
-    <thead><tr><th>Time</th><th>Brand</th><th>Item Sold</th><th class="r">Amount</th><th class="r">GST</th><th class="r">Received</th><th class="r">Extra</th><th>Mode</th><th></th></tr></thead>
+    <thead><tr><th>Time</th><th>Brand</th><th>Item Sold</th><th class="r">Amount</th><th class="r">Discount</th><th class="r">GST</th><th class="r">Received</th><th class="r">Extra</th><th>Mode</th><th></th></tr></thead>
     <tbody id="sale-tb"></tbody></table></div>
   <div id="sale-empty" class="empty">No electronics sales recorded today.</div>
 </section>
@@ -143,6 +156,31 @@ td button{padding:4px 8px;color:var(--bad)}
     <thead><tr><th>Time</th><th>Payee</th><th class="r">Amount</th><th>Note</th><th></th></tr></thead>
     <tbody id="w-tb"></tbody></table></div>
   <div id="w-empty" class="empty">No wage or expense entries for today.</div>
+</section>
+
+<section class="card">
+  <strong>Inventory (electronics stock)</strong>
+  <div class="sum" style="margin:10px 0" aria-live="polite">
+    <div><small>Items</small><b id="i-n">0</b></div>
+    <div><small>Total units</small><b id="i-u">0</b></div>
+    <div class="n"><small>Stock value (cost)</small><b id="i-v">₹0</b></div>
+    <div class="g"><small>Low / out of stock</small><b id="i-l">0</b></div>
+  </div>
+  <div class="grid f">
+    <div><label for="ipid">Product ID (7 digits)</label><input id="ipid" inputmode="numeric" maxlength="7" placeholder="Auto for new item"></div>
+    <div><label for="in">Item name</label><input id="in" placeholder="Charger, cable, earphones…"></div>
+    <div><label for="ib">Brand</label><input id="ib" list="brands" placeholder="boAt, Samsung…"></div>
+    <div><label for="iq">Quantity to add</label><input id="iq" type="number" min="0" step="any" inputmode="decimal"></div>
+    <div><label for="ic">Cost price (₹)</label><input id="ic" type="number" min="0" step="any" inputmode="decimal"></div>
+    <div><label for="ip">Selling price (₹)</label><input id="ip" type="number" min="0" step="any" inputmode="decimal"></div>
+    <div><label for="il">Low-stock alert at</label><input id="il" type="number" min="0" step="any" inputmode="decimal" value="2"></div>
+  </div>
+  <div class="row" style="margin:12px 0"><button class="p" id="iadd">Add / update stock</button><button id="icsv">Download CSV</button><span id="imsg" class="empty" role="status"></span></div>
+  <div class="scroll"><table>
+    <thead><tr><th>Product ID</th><th>Item</th><th>Brand</th><th class="r">Stock</th><th class="r">Cost</th><th class="r">Price</th><th class="r">Value</th><th></th></tr></thead>
+    <tbody id="i-tb"></tbody></table></div>
+  <div id="i-empty" class="empty">No inventory items yet.</div>
+  <datalist id="items"></datalist>
 </section>
 
 <section class="card">
@@ -196,6 +234,7 @@ const today=()=>{const t=new Date();return new Date(t-t.getTimezoneOffset()*6e4)
 const money=n=>'₹'+(Math.round(n*100)/100).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2});
 const day=()=>db[$('d').value]||(db[$('d').value]={ob:0,ad:0,e:[],sales:[],wages:[]});
 const num=v=>parseFloat(v)||0;
+let cart=[];
 
 // Helper to compute tax-inclusive GST breakdown
 function calcGst(totalAmt, rate) {
@@ -204,6 +243,57 @@ function calcGst(totalAmt, rate) {
   const base = totalAmt / (1 + r / 100);
   const tax = totalAmt - base;
   return { rate: r, base, tax };
+}
+
+// GST breakdown for a bill: handles multi-item bills with different rates
+function billGst(x){
+  if(!x.items||!x.items.length){
+    const g=calcGst(x.amt,x.gstRate||0);
+    return {rate:g.rate,base:g.base,tax:g.tax,mixed:false,groups:g.rate>0?[{rate:g.rate,base:g.base,tax:g.tax}]:[]};
+  }
+  const f=(x.gross>0&&x.disc>0)?(x.amt/x.gross):1; // discount reduces the taxable value in proportion
+  const m={};let base=0,tax=0;
+  x.items.forEach(it=>{
+    const g=calcGst(it.qty*it.rate*f,it.gstRate);
+    base+=g.base;tax+=g.tax;
+    if(g.rate>0){const k=g.rate;m[k]=m[k]||{rate:k,base:0,tax:0};m[k].base+=g.base;m[k].tax+=g.tax}
+  });
+  const rates=[...new Set(x.items.map(i=>num(i.gstRate)))];
+  return {rate:rates.length===1?rates[0]:0,base,tax,mixed:rates.length>1,groups:Object.values(m)};
+}
+
+function readItem(){
+  const rate=num($('amt').value);
+  if(rate<=0)return null;
+  const raw=$('num').value.trim(),br=$('op').value.trim(),iv=findInv(raw,br);
+  return {brand:br||(iv?iv.brand:''),item:iv?iv.name:(raw||'Item'),named:!!(iv||raw),pid:iv?iv.pid:'',qty:num($('qty').value)||1,rate,gstRate:num($('gst').value),invId:iv?iv.id:null};
+}
+
+function renderCart(){
+  const box=$('cartbox');box.innerHTML='';
+  if(!cart.length){box.style.display='none';return}
+  box.style.display='block';
+  const wrap=document.createElement('div');wrap.className='scroll';
+  const t=document.createElement('table');
+  t.innerHTML='<thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">GST</th><th class="r">Amount</th><th></th></tr></thead>';
+  const tb=document.createElement('tbody');
+  let tot=0;
+  cart.forEach((it,i)=>{
+    const lt=it.qty*it.rate;tot+=lt;
+    const tr=document.createElement('tr');
+    const add=(txt,c)=>{const td=document.createElement('td');td.textContent=txt;if(c)td.className=c;tr.appendChild(td)};
+    add((it.brand?it.brand+' ':'')+it.item);add(String(it.qty),'r');add(money(it.rate),'r');add(it.gstRate+'%','r');add(money(lt),'r');
+    const td=document.createElement('td'),b=document.createElement('button');
+    b.type='button';b.textContent='Remove';b.onclick=()=>{cart.splice(i,1);renderCart()};
+    td.appendChild(b);tr.appendChild(td);tb.appendChild(tr);
+  });
+  t.appendChild(tb);wrap.appendChild(t);box.appendChild(wrap);
+  const tt=document.createElement('div');tt.style.cssText='text-align:right;font-weight:700;margin-top:8px';
+  const dvv=num($('dv').value);
+  let dd=$('dt').value==='%'?tot*Math.min(dvv,100)/100:Math.min(dvv,tot);
+  dd=Math.round(dd*100)/100;
+  tt.textContent=dd>0?'Subtotal '+money(tot)+' − Discount '+money(dd)+' = Bill total '+money(Math.round((tot-dd)*100)/100):'Bill total: '+money(Math.round(tot*100)/100);
+  box.appendChild(tt);
 }
 
 async function syncToSheet(payload, statusEl, itemRef) {
@@ -234,7 +324,7 @@ function render(){
   D.sales = D.sales || [];
   D.wages = D.wages || [];
   tb.innerHTML='';stb.innerHTML='';D.w=D.w||{};const run={};
-  let amt=0,cash=0,upi=0,salesTot=0,extraTot=0,gstTot=0;const by={};
+  let amt=0,cash=0,upi=0,salesTot=0,extraTot=0,gstTot=0,discTot=0;const by={};
 
   // 1. Render Recharges & Bills
   D.e.forEach((x,i)=>{
@@ -248,8 +338,10 @@ function render(){
 
     amt+=x.amt;
     const wk=(x.op||'No operator').toLowerCase();
+    // FIX: accumulate per-operator recharge totals for the wallet table
+    const g0=by[wk]||(by[wk]={n:0,t:0});g0.n++;g0.t+=x.amt;
     const w0=D.w[wk]||{};
-    if(!(wk in run)) run[wk]=num(w0.ob)+num(w0.ad);
+    if(!(wk in run)) run[wk]=openEff(D,wk)+num(w0.ad);
     run[wk]-=x.amt;
     bal=run[wk];
     x.lastBal = bal;
@@ -282,7 +374,7 @@ function render(){
     const extra = received - s.amt;
     if(extra > 0) extraTot += extra;
 
-    const gInfo = calcGst(s.amt, s.gstRate || 0);
+    const gInfo = billGst(s);
     gstTot += gInfo.tax;
 
     if(s.pay==='Cash')cash+=received;else if(s.pay==='UPI')upi+=received;
@@ -292,7 +384,9 @@ function render(){
     const td2=document.createElement('td');td2.textContent=s.op||'-';tr.appendChild(td2);
     const td3=document.createElement('td');td3.textContent=s.num||'-';tr.appendChild(td3);
     const td4=document.createElement('td');td4.className='r';td4.textContent=money(s.amt);tr.appendChild(td4);
-    const tdGst=document.createElement('td');tdGst.className='r';tdGst.textContent=gInfo.rate>0?`${money(gInfo.tax)} (${gInfo.rate}%)`:'-';tr.appendChild(tdGst);
+    discTot+=s.disc||0;
+    const tdDisc=document.createElement('td');tdDisc.className='r';tdDisc.textContent=s.disc>0?money(s.disc)+(s.discType==='%'?' ('+s.discVal+'%)':''):'-';tr.appendChild(tdDisc);
+    const tdGst=document.createElement('td');tdGst.className='r';tdGst.textContent=gInfo.tax>0?`${money(gInfo.tax)} (${gInfo.mixed?'mixed':gInfo.rate+'%'})`:'-';tr.appendChild(tdGst);
     const td5=document.createElement('td');td5.className='r';td5.textContent=money(received);tr.appendChild(td5);
     const td6=document.createElement('td');td6.className='r';
     if(extra!==0){td6.textContent=(extra>0?'+':'')+money(extra);td6.style.color=extra>0?'var(--gain)':'var(--bad)';td6.style.fontWeight='600';}else{td6.textContent='-';}
@@ -300,7 +394,7 @@ function render(){
     const td7=document.createElement('td');td7.textContent=s.pay;tr.appendChild(td7);
 
     const td8=document.createElement('td');const bb=document.createElement('button');bb.textContent='Bill';bb.style.color='var(--acc)';bb.onclick=()=>showBill(D.sales[i],i,true);
-    const b=document.createElement('button');b.textContent='Delete';b.onclick=()=>{D.sales.splice(i,1);save();render()};
+    const b=document.createElement('button');b.textContent='Delete';b.onclick=()=>{restoreStock(D.sales[i]);D.sales.splice(i,1);save();render()};
     td8.appendChild(bb);td8.appendChild(b);tr.appendChild(td8);
     stb.appendChild(tr);
   });
@@ -336,11 +430,23 @@ function render(){
   ];
 
   let total=0;
-  const inp=(k,f)=>{const td=document.createElement('td');td.className='r';const i=document.createElement('input');i.type='number';i.min='0';i.step='any';i.inputMode='decimal';i.style.width='96px';i.value=(D.w[k]||{})[f]||'';i.setAttribute('aria-label',k+(f==='ob'?' opening balance':' top-up'));i.onchange=()=>{D.w[k]=D.w[k]||{};D.w[k][f]=num(i.value);save();render()};td.appendChild(i);return td};
+  const inp=(k,f)=>{
+    const td=document.createElement('td');td.className='r';
+    const i=document.createElement('input');i.type='number';i.min='0';i.step='any';i.inputMode='decimal';i.style.width='96px';
+    const w=D.w[k]||{};
+    if(f==='ob'){
+      const exp=w.ob!==undefined&&w.ob!==null;
+      i.value=openEff(D,k)||'';
+      if(!exp&&i.value){i.style.color='var(--mute)';i.title='Carried forward from the previous day. Type a number to change it.'}
+    } else i.value=w[f]||'';
+    i.setAttribute('aria-label',k+(f==='ob'?' opening balance':' top-up'));
+    i.onchange=()=>{D.w[k]=D.w[k]||{};if(f==='ob'&&i.value.trim()===''){delete D.w[k].ob}else D.w[k][f]=num(i.value);save();render()};
+    td.appendChild(i);return td;
+  };
 
   fixedOps.forEach(opItem=>{
     const k=opItem.key;
-    const w=D.w[k]||{}, g=by[k]||{n:0,t:0}, b=num(w.ob)+num(w.ad)-g.t;
+    const w=D.w[k]||{}, g=by[k]||{n:0,t:0}, b=openEff(D,k)+num(w.ad)-g.t;
     total+=b;
     const tr=document.createElement('tr');
     const n=document.createElement('td');n.textContent=opItem.name;tr.appendChild(n);
@@ -350,11 +456,32 @@ function render(){
     wt.appendChild(tr);
   });
 
-  $('s-amt').textContent=money(amt);$('s-sale').textContent=money(salesTot);
+  $('s-amt').textContent=money(amt);$('s-sale').textContent=money(salesTot);$('s-disc').textContent=money(discTot);
   $('s-pay').textContent=money(cash)+' / '+money(upi);
   $('s-gst').textContent=money(gstTot);
   $('s-extra').textContent=money(extraTot);
   $('s-bal').textContent=money(total);
+  // Cash & UPI book
+  const cb=$('cb-tb');cb.innerHTML='';
+  [['cash','Cash',cash,wageTot],['upi','UPI',upi,0]].forEach(([kind,label,col,wg])=>{
+    const key=kind+'Ob',exp=D[key]!==undefined&&D[key]!==null;
+    const open=exp?num(D[key]):cashOpening($('d').value,kind);
+    const close=Math.round((open+col-wg)*100)/100;
+    if(kind==='cash')$('s-cash').textContent=money(close);
+    const tr=document.createElement('tr');
+    const c=(t,cl)=>{const td=document.createElement('td');td.textContent=t;if(cl)td.className=cl;tr.appendChild(td);return td};
+    c(label).style.fontWeight='600';
+    const td=document.createElement('td');td.className='r';
+    const i=document.createElement('input');i.type='number';i.step='any';i.inputMode='decimal';i.style.width='110px';
+    i.value=open||'';i.setAttribute('aria-label',label+' opening balance');
+    if(!exp&&i.value){i.style.color='var(--mute)';i.title='Carried forward from the previous day. Type a number to change it.'}
+    i.onchange=()=>{if(i.value.trim()===''){delete D[key]}else{D[key]=num(i.value)}save();render()};
+    td.appendChild(i);tr.appendChild(td);
+    c(money(col),'r');c(wg?'− '+money(wg):'-','r');
+    const cl=c(money(close),'r');cl.style.fontWeight='700';if(close<0)cl.style.color='var(--bad)';
+    cb.appendChild(tr);
+  });
+  renderInv();
   renderLedger();
 }
 
@@ -362,23 +489,57 @@ $('d').value=today();
 $('d').onchange=render;
 $('svc').onchange=()=>{
   const v=$('svc').value, s=v==='Electronics sale', e=['Electricity bill','Water bill'].includes(v);
-  $('numl').textContent=s?'Item sold':e?'Consumer number (K / CA no.)':'Number / customer';
-  $('num').placeholder=s?'Charger, earphones, cable…':e?'Consumer number':'Mobile or ID';
+  $('numl').textContent=s?'Item name or Product ID':e?'Consumer number (K / CA no.)':'Number / customer';
+  $('num').placeholder=s?'Name or 7-digit Product ID':e?'Consumer number':'Mobile or ID';
   $('opl').textContent=s?'Brand (optional)':'Operator';
   $('op').setAttribute('list',s?'brands':'ops');
   $('op').placeholder=s?'Samsung, boAt, JBL…':'Jio, Airtel, Vi…';
+  $('amtl').textContent=s?'Rate per item (₹, incl. GST)':'Total Amount (₹)';
+  $('qw').style.display=s?'block':'none';
+  $('dw').style.display=s?'block':'none';
+  $('addi').style.display=s?'inline-block':'none';
+  if(s)$('num').setAttribute('list','items');else $('num').removeAttribute('list');
+  $('num').inputMode=s?'text':'tel';
+  renderCart();
+  if(!s)$('cartbox').style.display='none';
+};
+$('dv').oninput=$('dt').onchange=renderCart;
+$('addi').onclick=()=>{
+  const it=readItem();
+  if(!it){$('msg').textContent='Enter the item rate (greater than 0).';$('amt').focus();return}
+  cart.push(it);
+  $('num').value='';$('amt').value='';$('qty').value=1;
+  $('msg').textContent='Item added. Add more, or press Add entry to finish the bill.';
+  renderCart();$('num').focus();
 };
 
 $('add').onclick=async ()=>{
-  const amt=num($('amt').value);
-  if(amt<=0){$('msg').textContent='Enter an amount greater than 0.';$('amt').focus();return}
+  const isSale=$('svc').value==='Electronics sale';
+  let items=null,amt,gross=0,disc=0;
+  if(isSale){
+    items=cart.slice();
+    const cur=readItem();if(cur)items.push(cur);
+    if(!items.length){$('msg').textContent='Enter an item rate greater than 0.';$('amt').focus();return}
+    gross=Math.round(items.reduce((a,it)=>a+it.qty*it.rate,0)*100)/100;
+    const dvv=num($('dv').value);
+    disc=$('dt').value==='%'?gross*Math.min(dvv,100)/100:Math.min(dvv,gross);
+    disc=Math.round(disc*100)/100;
+    amt=Math.round((gross-disc)*100)/100;
+    var short=[];
+    for(const it of items){
+      const iv=findInvById(it.invId);
+      if(iv&&iv.qty<it.qty)short.push(iv.name+' (stock '+iv.qty+')');
+    }
+  } else {
+    amt=num($('amt').value);
+    if(amt<=0){$('msg').textContent='Enter an amount greater than 0.';$('amt').focus();return}
+  }
   const recRaw=$('rec').value.trim();
   const rec=recRaw==='' ? amt : num(recRaw);
   const extra=rec - amt;
   const gstRate=num($('gst').value);
-  const gInfo=calcGst(amt, gstRate);
+  const gInfo=isSale?billGst({items,amt,gross,disc,gstRate}):calcGst(amt, gstRate);
   const t=new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  const isSale=$('svc').value==='Electronics sale';
   
   const ent={
     time:t,
@@ -398,6 +559,25 @@ $('add').onclick=async ()=>{
 
   const D=day();
   if(isSale){
+    // auto-create a product (new 7-digit ID) for any named item not yet in inventory
+    var made=[];
+    items.forEach(it=>{
+      if(it.named===false)return;
+      let iv=findInvById(it.invId)||findInv(it.item,it.brand);
+      if(!iv){
+        db.inv=db.inv||[];
+        iv={id:'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),pid:allocPid(),name:it.item,brand:it.brand||'',qty:0,cost:0,price:it.rate,gst:it.gstRate,low:2,auto:true};
+        db.inv.push(iv);made.push(iv);
+      }
+      it.invId=iv.id;it.pid=iv.pid;
+      if(iv.gst===undefined)iv.gst=it.gstRate;
+    });
+    items.forEach(it=>{const iv=findInvById(it.invId);if(iv){it.cut=Math.min(iv.qty,it.qty);iv.qty-=it.cut}else it.cut=0});
+    ent.items=items;
+    ent.gross=gross;ent.disc=disc;ent.discType=$('dt').value;ent.discVal=num($('dv').value);
+    ent.op=[...new Set(items.map(i=>i.brand).filter(Boolean))].join(', ');
+    ent.num=items.map(i=>i.item+(i.qty>1?' ×'+i.qty:'')).join(', ');
+    cart=[];$('qty').value=1;$('dv').value='';renderCart();
     D.sales = D.sales || [];
     D.sales.push(ent);
     save();
@@ -405,6 +585,8 @@ $('add').onclick=async ()=>{
     render();
     if($('autob').checked)showBill(ent, D.sales.length-1, true);else $('num').focus();
     await syncToSheet({recordType:'sale', ...ent}, $('msg'), ent);
+    if(short.length)$('msg').textContent+=' · Low stock: '+short.join(', ');
+    if(made.length)$('msg').textContent+=' · New product ID: '+made.map(v=>v.name+' = '+v.pid).join(', ');
   } else {
     D.e.push(ent);
     save();
@@ -431,7 +613,7 @@ $('wadd').onclick=async ()=>{
 
 $('sync-all').onclick=async ()=>{
   const url = (db.shop && db.shop.gsUrl) ? db.shop.gsUrl.trim() : DEFAULT_GS_URL;
-  if (!url) { alert('Please paste your Google Apps Script Web App URL.'); return; }
+  if (!url) { $('msg').textContent='Please paste your Google Apps Script Web App URL.'; return; }
   const D=day(), L=db.ledger||[];
   let count=0;
   for (const ent of D.e) { if (!ent.synced) { await syncToSheet({recordType:'daily', ...ent, bal: ent.lastBal}, $('msg'), ent); count++; } }
@@ -446,27 +628,27 @@ $('sync-all').onclick=async ()=>{
   $('msg').textContent = count ? `Synced ${count} pending entries ✓` : 'All entries are already synced.';
 };
 
-$('clr').onclick=()=>{if(confirm('Delete all entries for '+$('d').value+'?')){day().e=[];day().sales=[];day().wages=[];save();render()}};
+twoTap($('clr'),'Tap again to clear',()=>{(day().sales||[]).forEach(restoreStock);day().e=[];day().sales=[];day().wages=[];save();render()});
 $('csv').onclick=()=>{
   const D=day();
   const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
   const run={};D.w=D.w||{};
-  let rows=[['Date','Time','Type','Service/Brand','Number/Item','Total Amount','GST Rate (%)','Base Amount','GST Amount','Cash Received','Extra Cash','Operator balance','Payment']].concat(
+  let rows=[['Date','Time','Type','Service/Brand','Number/Item','Total Amount','GST Rate (%)','Base Amount','GST Amount','Cash Received','Extra Cash','Operator balance','Payment','Discount']].concat(
     D.e.map(x=>{
       const rec=(x.rec!==undefined&&x.rec!==null)?x.rec:x.amt;
       const ext=rec-x.amt;
       const g=calcGst(x.amt, x.gstRate||0);
       const k=(x.op||'No operator').toLowerCase();
-      if(!(k in run)){const w=D.w[k]||{};run[k]=num(w.ob)+num(w.ad)}
+      if(!(k in run)){const w=D.w[k]||{};run[k]=openEff(D,k)+num(w.ad)}
       run[k]-=x.amt;
-      return [$('d').value,x.time,'Recharge',x.svc,x.num,x.amt,g.rate,Math.round(g.base*100)/100,Math.round(g.tax*100)/100,rec,ext,run[k],x.pay];
+      return [$('d').value,x.time,'Recharge',x.svc,x.num,x.amt,g.rate,Math.round(g.base*100)/100,Math.round(g.tax*100)/100,rec,ext,run[k],x.pay,0];
     })
   ).concat(
     (D.sales||[]).map(s=>{
       const rec=(s.rec!==undefined&&s.rec!==null)?s.rec:s.amt;
       const ext=rec-s.amt;
-      const g=calcGst(s.amt, s.gstRate||0);
-      return [$('d').value,s.time,'Sale',s.op||'-',s.num||'-',s.amt,g.rate,Math.round(g.base*100)/100,Math.round(g.tax*100)/100,rec,ext,'',s.pay];
+      const g=billGst(s);
+      return [$('d').value,s.time,'Sale',s.op||'-',s.num||'-',s.amt,g.rate,Math.round(g.base*100)/100,Math.round(g.tax*100)/100,rec,ext,'',s.pay,s.disc||0];
     })
   );
   const blob=new Blob([rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'});
@@ -526,19 +708,27 @@ function showBill(x,i,isSale){
   ln('Date',x.date||$('d').value);ln('Time',x.time);
   el('hr');
   ln('Service',isSale?'Electronics sale':x.svc);
-  if(x.op)ln(isSale?'Brand':'Operator',x.op);
-  if(x.num)ln(isSale?'Item sold':'Number',x.num);
+  if(x.items&&x.items.length){
+    el('div','',"Items").style.fontWeight='700';
+    x.items.forEach(it=>{
+      const nm=(it.brand?it.brand+' ':'')+it.item;
+      ln(nm,money(it.qty*it.rate));
+      if(it.qty!==1||it.pid)el('div','',(it.qty!==1?it.qty+' × '+money(it.rate)+(it.gstRate?' (GST '+it.gstRate+'%)':''):'')+(it.pid?(it.qty!==1?'  ·  ':'')+'ID '+it.pid:'')).style.cssText='font-size:.8rem;color:#555;margin:-2px 0 2px 8px';
+    });
+  } else {
+    if(x.op)ln(isSale?'Brand':'Operator',x.op);
+    if(x.num)ln(isSale?'Item sold':'Number',x.num);
+  }
   ln('Paid by',x.pay);
   el('hr');
 
-  const gInfo=calcGst(x.amt, x.gstRate||0);
-  if(gInfo.rate>0){
-    const halfRate = gInfo.rate / 2;
-    const halfTax = gInfo.tax / 2;
-    ln('Taxable value',money(gInfo.base));
-    ln(`CGST (${halfRate}%)`,money(halfTax));
-    ln(`SGST (${halfRate}%)`,money(halfTax));
-  }
+  if(x.disc>0){ln('Subtotal',money(x.gross));ln('Discount'+(x.discType==='%'?' ('+x.discVal+'%)':''),'− '+money(x.disc))}
+  const gInfo=billGst(x);
+  gInfo.groups.forEach(gr=>{
+    ln(`Taxable value (${gr.rate}%)`,money(gr.base));
+    ln(`CGST (${gr.rate/2}%)`,money(gr.tax/2));
+    ln(`SGST (${gr.rate/2}%)`,money(gr.tax/2));
+  });
 
   const received=(x.rec!==undefined&&x.rec!==null)?x.rec:x.amt;
   const extra=received-x.amt;
@@ -575,6 +765,171 @@ const saveShop=()=>{
 };
 $('sn').onchange=$('sp').onchange=$('sg').onchange=$('sa').onchange=$('gs-url').onchange=saveShop;
 
+// Wallet carry-forward: closing balance of every earlier day becomes the next day's opening
+function walletOpening(dateKey,k){
+  let bal=0;
+  Object.keys(db).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&d<dateKey).sort().forEach(d=>{
+    const D0=db[d],w=((D0&&D0.w)||{})[k]||{};
+    if(w.ob!==undefined&&w.ob!==null)bal=num(w.ob);
+    bal+=num(w.ad);
+    ((D0&&D0.e)||[]).forEach(x=>{if((x.op||'No operator').toLowerCase()===k)bal-=x.amt});
+  });
+  return Math.round(bal*100)/100;
+}
+function openEff(D,k){
+  const w=(D.w||{})[k]||{};
+  return (w.ob!==undefined&&w.ob!==null)?num(w.ob):walletOpening($('d').value,k);
+}
+
+// Cash / UPI carry-forward: closing of every earlier day becomes the next day's opening
+function dayCollect(D0){
+  let cash=0,upi=0;
+  [...((D0&&D0.e)||[]),...((D0&&D0.sales)||[])].forEach(x=>{
+    const r=(x.rec!==undefined&&x.rec!==null)?x.rec:x.amt;
+    if(x.pay==='Cash')cash+=r;else if(x.pay==='UPI')upi+=r;
+  });
+  const wg=((D0&&D0.wages)||[]).reduce((a,w)=>a+w.amt,0);
+  return {cash,upi,wg};
+}
+function cashOpening(dateKey,kind){
+  let bal=0;
+  Object.keys(db).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&d<dateKey).sort().forEach(d=>{
+    const D0=db[d],ex=D0[kind+'Ob'];
+    if(ex!==undefined&&ex!==null)bal=num(ex);
+    const t=dayCollect(D0);
+    bal+=t[kind];
+    if(kind==='cash')bal-=t.wg;
+  });
+  return Math.round(bal*100)/100;
+}
+
+// Two-tap confirmation (works everywhere, unlike confirm()/prompt() which some browsers/apps block)
+function twoTap(btn,label,fn){
+  const orig=btn.textContent;let armed=false,t;
+  btn.onclick=()=>{
+    if(armed){clearTimeout(t);fn();return}
+    armed=true;btn.textContent=label;btn.style.fontWeight='700';
+    t=setTimeout(()=>{armed=false;btn.textContent=orig;btn.style.fontWeight=''},4000);
+  };
+}
+
+/* ---------- Inventory ---------- */
+// 7-digit product IDs: 1000001, 1000002, ... never reused, even after a product is deleted
+function peekPid(){
+  const mx=Math.max(num(db.pidSeq),1000000,...(db.inv||[]).map(v=>num(v.pid)));
+  return String(mx+1);
+}
+function allocPid(){const id=peekPid();db.pidSeq=num(id);return id}
+function findInv(name,brand){
+  const n=(name||'').trim().toLowerCase(),b=(brand||'').trim().toLowerCase();
+  if(!n)return null;
+  const byId=(db.inv||[]).find(v=>v.pid===(name||'').trim());
+  if(byId)return byId;
+  const L=(db.inv||[]).filter(v=>v.name.toLowerCase()===n);
+  return L.find(v=>b&&v.brand.toLowerCase()===b)||(b?null:L[0])||null;
+}
+function findInvById(id){return id?(db.inv||[]).find(v=>v.id===id)||null:null}
+function restoreStock(sale){
+  (sale&&sale.items||[]).forEach(it=>{const iv=findInvById(it.invId);if(iv&&it.cut)iv.qty+=it.cut});
+}
+function renderInv(){
+  const L=db.inv=db.inv||[],tb=$('i-tb');
+  tb.innerHTML='';
+  let units=0,val=0,low=0;
+  L.forEach((v,i)=>{
+    units+=v.qty;val+=v.qty*v.cost;
+    const isLow=v.qty<=v.low;if(isLow)low++;
+    const tr=document.createElement('tr');
+    const add=(t,c)=>{const td=document.createElement('td');td.textContent=t;if(c)td.className=c;tr.appendChild(td);return td};
+    add(v.pid).style.fontWeight='600';add(v.name);add(v.brand||'-');
+    const q=add(String(v.qty),'r');q.style.fontWeight='600';if(isLow)q.style.color='var(--bad)';
+    add(money(v.cost),'r');add(money(v.price),'r');add(money(v.qty*v.cost),'r');
+    const td=document.createElement('td');
+    const qi=document.createElement('input');qi.type='number';qi.min='0';qi.step='any';qi.inputMode='decimal';qi.placeholder='Qty';
+    qi.style.cssText='width:70px;padding:4px 6px;margin-right:4px';qi.setAttribute('aria-label','Quantity for '+v.name);td.appendChild(qi);
+    const mk=(t,fn,col)=>{const b=document.createElement('button');b.type='button';b.textContent=t;if(col)b.style.color=col;b.onclick=fn;td.appendChild(b);return b};
+    mk('+ Stock',()=>{const n=num(qi.value);if(n>0){v.qty+=n;save();renderInv()}else qi.focus()},'var(--acc)');
+    mk('− Stock',()=>{const n=num(qi.value);if(n>0){v.qty=Math.max(0,v.qty-n);save();renderInv()}else qi.focus()});
+    twoTap(mk('Delete',()=>{}),'Tap again to delete',()=>{L.splice(i,1);save();renderInv()});
+    tr.appendChild(td);tb.appendChild(tr);
+  });
+  $('i-empty').style.display=L.length?'none':'block';
+  $('i-n').textContent=L.length;$('i-u').textContent=units;
+  $('i-v').textContent=money(val);$('i-l').textContent=low;
+  const dl=$('items');dl.innerHTML='';
+  L.forEach(v=>{const o=document.createElement('option');o.value=v.name;dl.appendChild(o)});
+  L.forEach(v=>{const o=document.createElement('option');o.value=v.pid;o.label=v.name+(v.brand?' ('+v.brand+')':'');dl.appendChild(o)});
+  $('ipid').placeholder='Auto: '+peekPid();
+}
+function fillFromPid(){
+  const id=$('ipid').value.trim();
+  if(!id)return null;
+  const v=(db.inv||[]).find(x=>x.pid===id);
+  if(!v){$('imsg').textContent='No product found with ID '+id+'.';return null}
+  $('in').value=v.name;$('ib').value=v.brand;$('ic').value=v.cost||'';$('ip').value=v.price||'';$('il').value=v.low;
+  $('imsg').textContent='Found: '+v.name+(v.brand?' ('+v.brand+')':'')+' – stock '+v.qty+'. Enter the quantity to add.';
+  $('iq').focus();
+  return v;
+}
+$('ipid').onchange=fillFromPid;
+$('iadd').onclick=()=>{
+  const pidIn=$('ipid').value.trim(),name=$('in').value.trim(),brand=$('ib').value.trim();
+  const qty=num($('iq').value),cost=num($('ic').value),price=num($('ip').value);
+  const lowRaw=$('il').value.trim(),low=lowRaw===''?2:num(lowRaw);
+  db.inv=db.inv||[];
+  let ex=null;
+  if(pidIn){
+    ex=db.inv.find(v=>v.pid===pidIn);
+    if(!ex){$('imsg').textContent='No product found with ID '+pidIn+'. Leave the ID blank to create a new product.';$('ipid').focus();return}
+  }
+  if(!name){$('imsg').textContent='Enter the item name.';$('in').focus();return}
+  if(qty<=0&&!$('ip').value&&!$('ic').value){$('imsg').textContent='Enter a quantity (or a new price to update).';$('iq').focus();return}
+  if(!ex)ex=db.inv.find(v=>v.name.toLowerCase()===name.toLowerCase()&&v.brand.toLowerCase()===brand.toLowerCase())||null;
+  if(ex){
+    ex.name=name;ex.brand=brand;
+    ex.qty+=qty;
+    if($('ic').value)ex.cost=cost;
+    if($('ip').value)ex.price=price;
+    ex.low=low;
+    $('imsg').textContent='Updated '+ex.name+' (ID '+ex.pid+') – stock now '+ex.qty+'.';
+  } else {
+    const pid=allocPid();
+    db.inv.push({id:'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),pid,name,brand,qty,cost,price,low});
+    $('imsg').textContent='Added '+name+' – Product ID '+pid;
+  }
+  save();['ipid','in','iq','ic','ip'].forEach(i=>$(i).value='');
+  renderInv();$('in').focus();
+};
+$('icsv').onclick=()=>{
+  const q=x=>'"'+String(x).replace(/"/g,'""')+'"';
+  const rows=[['Product ID','Item','Brand','Stock','Cost','Price','Stock value']].concat((db.inv||[]).map(v=>[v.pid,v.name,v.brand,v.qty,v.cost,v.price,v.qty*v.cost]));
+  const blob=new Blob([rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='inventory-'+$('d').value+'.csv';a.click();
+};
+// picking an inventory item on a sale fills brand and price
+$('num').onchange=()=>{
+  if($('svc').value!=='Electronics sale')return;
+  const raw=$('num').value.trim();
+  const iv=findInv(raw,$('op').value);
+  if(!iv)return;
+  if(iv.pid===raw){
+    $('num').value=iv.name;$('op').value=iv.brand;
+    if(iv.price)$('amt').value=iv.price;
+  } else {
+    if(!$('op').value.trim())$('op').value=iv.brand;
+    if(!$('amt').value&&iv.price)$('amt').value=iv.price;
+  }
+  if(iv.gst!==undefined)$('gst').value=String(iv.gst);
+  $('msg').textContent='ID '+iv.pid+' · '+iv.name+' · stock '+iv.qty;
+};
+// Enter on the item box adds the item straight to the bill (handy with a barcode scanner)
+$('num').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||$('svc').value!=='Electronics sale')return;
+  e.preventDefault();$('num').onchange();
+  if(num($('amt').value)>0)$('addi').click();
+});
+
+(db.inv||[]).forEach(v=>{if(!v.pid)v.pid=allocPid()});save();
 render();
 </script>
 </body>
